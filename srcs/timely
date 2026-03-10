@@ -1,0 +1,163 @@
+// timely
+// 
+// Version 0.0.1 built 20250706
+//
+// Include Header of 
+//   Timely Library - 
+//   A Header Only Light-weight Benchmark and Analysis Toolkit for C++
+// 
+// CC DOF Studio 2025
+
+#include "Timely_Globals.hpp"
+
+#pragma once
+
+// To Globally Enable or Disable Timely,
+// Find our "Timely_Define.hpp" and modify the value of "__timelyon__"
+//   "__timelyon__" != 0 means Timely Functionality is ON
+//   "__timelyon__" == 0 means Timely Functionality if OFF, the program runs as is
+
+// Introduce Timely Hash Interfaces
+template<typename _CharTyp = libnocppsh::libtimely::_CharType>
+inline constexpr auto thash(const _CharTyp* str) noexcept {
+    return libnocppsh::libtimely::_Timely_Hash(str);
+}
+template<typename _Ty, typename... _Rest>
+requires std::is_same_v<_Ty, const libnocppsh::libtimely::_CharType*>
+inline constexpr libnocppsh::libtimely::_HashType _Timely_Hash(_Ty str, _Rest... rest) noexcept {
+    return libnocppsh::libtimely::_Timely_Hash(str, rest...);
+}
+
+// Introduce Timely Generic API Interfaces
+template <libnocppsh::libtimely::_ThreadIdType _ThreadId = 0, typename _MD = libnocppsh::libtimely::_Timely_MemoryModel_Heaplike>
+using Timely = libnocppsh::libtimely::_Timely<_ThreadId, _MD>;
+
+// Introduce Timely Generic API Interfaces Default by Coverage
+template <libnocppsh::libtimely::_ThreadIdType _ThreadId = 0, typename _MD = libnocppsh::libtimely::_Timely_MemoryModel_Coverage>
+using Timelyc = libnocppsh::libtimely::_Timely<_ThreadId, _MD>;
+
+// Introduce Timely Generic API Interfaces Default by HeapLike
+template <libnocppsh::libtimely::_ThreadIdType _ThreadId = 0, typename _MD = libnocppsh::libtimely::_Timely_MemoryModel_Heaplike>
+using Timelyh = libnocppsh::libtimely::_Timely<_ThreadId, _MD>;
+
+// Introduce prjname API to Set Project Name
+template <typename _Ty>
+inline void prjname(_Ty arg) noexcept{
+    libnocppsh::libtimely::__GlobalTimelyProjectNameSet__(arg);
+}
+
+// Introduce timely Traceback API to Get Snapshot
+template<typename _BoolTyp = libnocppsh::libtimely::_BoolType>
+inline auto traceback(_BoolTyp stop_ = false) noexcept{
+    return libnocppsh::libtimely::__GlobalStackFrameSnapshotCallback__(stop_);
+}
+
+// Introduce Automatic Function Signature Macro
+#if defined(__GNUC__) || defined(__clang__)
+    #define __FUNCTION_SIGNATURE__   __PRETTY_FUNCTION__
+#elif defined(_MSC_VER)
+    #define __FUNCTION_SIGNATURE__   __FUNCSIG__  // Later MSVC also supports this
+#else
+    #define __FUNCTION_SIGNATURE__   __func__     // Fallback
+#endif
+
+// Introduce Timely Easy-to-Create Generic Macro
+#if __timelyon__
+
+    // Easy Implementation
+    #ifndef TIMELY_
+    #define TIMELY_        constexpr auto __timely_thash__ = thash(__FUNCTION_SIGNATURE__); \
+                           const auto __timely_object__ = Timely<0>(__FUNCTION_SIGNATURE__, __timely_thash__);
+    #endif
+
+    // Generic Implementation
+    #ifndef TIMELY
+    #define TIMELY(x)      constexpr auto __timely_thash__ = thash(x); \
+                           const auto __timely_object__ = Timely<0>(x, __timely_thash__);
+    #endif
+
+#else
+    #ifndef TIMELY_
+    #define TIMELY_
+    #endif
+
+    #ifndef TIMELY
+    #define TIMELY(x) 
+    #endif
+#endif
+
+// Introduce Timely (Multi-Thread) Easy-to-Create Generic Macro
+#if __timelyon__
+
+    // Easy Implementation
+    #ifndef TIMELIES_
+    #define TIMELIES_      constexpr auto __timelies_thash__ = thash(__FUNCTION_SIGNATURE__); \
+                           const auto __timelies_object__ = Timely<-1>(__FUNCTION_SIGNATURE__, __timelies_thash__);
+    #endif
+
+    // Generic Implementation
+    #ifndef TIMELIES
+    #define TIMELIES(x)    constexpr auto __timelies_thash__ = thash(x); \
+                           const auto __timelies_object__ = Timely<-1>(x, __timelies_thash__);
+    #endif
+
+#else
+    #ifndef TIMELIES_
+    #define TIMELIES_ 
+    #endif
+
+    #ifndef TIMELIES
+    #define TIMELIES(x) 
+    #endif
+#endif
+
+// Introduce Timely Project Name Setting Macro
+#if __timelyon__
+    #ifndef TIMELY_PRJNAME
+    #define TIMELY_PRJNAME(name)  prjname(name);
+    #endif
+#else
+    #ifndef TIMELY_PRJNAME
+    #define TIMELY_PRJNAME(name)
+    #endif
+#endif
+
+// Introduce Timely Snapshot Print Macro
+#if __timelyon__
+    #ifndef TIMELY_SNAPSHOT
+    #define TIMELY_SNAPSHOT(name)  std::cout << name << std::endl << traceback(false) << std::endl;
+    #endif
+#else
+    #ifndef TIMELY_SNAPSHOT
+    #define TIMELY_SNAPSHOT(name)
+    #endif
+#endif
+
+// Introduce Timely Try-Catch Syntax
+#ifndef TIMELY_TRY
+#define TIMELY_TRY try {
+#endif
+
+#ifndef TIMELY_CATCH
+#define TIMELY_CATCH } \
+                     catch (const libnocppsh::libtimely::_Timely_Exception& e) { \
+                         std::cerr << "Unhandled Timely Library Exception Captured. Error: \"" << e.what() << "\"" << std::endl; \
+                         std::cerr << "Timely (*) Exception Traceback: " << std::endl << traceback(true) << std::endl; \
+                         std::exit(0x00000F0A); \
+                     } \
+                     catch (const std::runtime_error& e) { \
+                         std::cerr << "Unhandled C++ Runtime Error Captured. Error: \"" << e.what() << "\"" << std::endl; \
+                         std::cerr << "Timely (*) Exception Traceback: " << std::endl << traceback(true) << std::endl; \
+                         std::exit(0x00000F1A); \
+                     } \
+                     catch (const std::exception& e) { \
+                         std::cerr << "Unhandled C++ Base Exception Captured. Error: \"" << e.what() << "\"" << std::endl; \
+                         std::cerr << "Timely (*) Exception Traceback: " << std::endl << traceback(true) << std::endl; \
+                         std::exit(0x00000FFA); \
+                     } \
+                     catch (...) { \
+                         std::cerr << "Unknown and Unhandled Exception Captured." << std::endl; \
+                         std::cerr << "Timely (*) Exception Traceback: " << std::endl << traceback(true) << std::endl; \
+                         std::exit(0x00000FFB); \
+                     }
+#endif
